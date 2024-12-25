@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.flink.streaming.web.mapper.ClusterMapper">
+
+  <resultMap id="BaseResultMap" type="com.flink.streaming.web.model.dto.ClusterDTO">
+    <id column="id" jdbcType="BIGINT" property="id"/>
+    <result column="cluster_name" jdbcType="VARCHAR" property="clusterName"/>
+    <result column="cluster_master_ip" jdbcType="VARCHAR" property="clusterMasterIp"/>
+    <result column="yarn_rm_port" jdbcType="VARCHAR" property="yarnRmPort"/>
+    <result column="flink_http_port" jdbcType="VARCHAR" property="flinkHttpPort"/>
+    <result column="flink_ui_port" jdbcType="VARCHAR" property="flinkUiPort"/>
+    <result column="flink_ha_http_port" jdbcType="VARCHAR" property="flinkHaHttpPort"/>
+    <result column="remark" jdbcType="VARCHAR" property="remark"/>
+    <result column="cluster_status" jdbcType="INTEGER" property="clusterStatus"/>
+  </resultMap>
+  <sql id="Base_Column_List">
+             cluster.id,
+              cluster.cluster_name,
+              cluster.cluster_master_ip,
+              cluster.yarn_rm_port,
+              cluster.flink_http_port,
+              cluster.flink_ui_port,
+              cluster.flink_ha_http_port,
+              cluster.remark,
+              ip_status.status as cluster_status
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List"/>
+    from cluster left join ip_status on cluster.id = ip_status.cluster_id
+    where cluster.id = #{id,jdbcType=BIGINT}
+  </select>
+
+
+  <select id="selectByIp" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List"/>
+    from cluster left join ip_status on cluster.id = ip_status.cluster_id
+    where cluster.cluster_master_ip = #{ip, jdbcType=VARCHAR} limit 1
+  </select>
+
+  <select id="findClusterList" parameterType="com.flink.streaming.web.model.param.ClusterParam"  resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List"/>
+    from cluster left join ip_status on cluster.id = ip_status.cluster_id
+    where 1=1
+    <if test="clusterName != null and clusterName != ''">
+      <![CDATA[
+	               and cluster.cluster_name like CONCAT('%',#{clusterName,jdbcType=VARCHAR},'%')
+			 ]]>
+    </if>
+    <if test="clusterMasterIp != null and clusterMasterIp != ''">
+      <![CDATA[
+	               and cluster.cluster_master_ip like CONCAT('%',#{clusterMasterIp,jdbcType=VARCHAR},'%')
+			 ]]>
+    </if>
+    order by cluster.id desc
+  </select>
+
+  <insert id="insert" parameterType="com.flink.streaming.web.model.dto.ClusterDTO">
+    insert into cluster (cluster_name, cluster_master_ip, yarn_rm_port, flink_http_port, flink_ui_port, flink_ha_http_port, remark
+    )
+    values (#{clusterName,jdbcType=VARCHAR}, #{clusterMasterIp,jdbcType=VARCHAR},
+    #{yarnRmPort,jdbcType=VARCHAR}, #{flinkHttpPort,jdbcType=VARCHAR},
+    #{flinkUiPort,jdbcType=VARCHAR}, #{flinkHaHttpPort,jdbcType=VARCHAR}, #{remark,jdbcType=VARCHAR}
+    )
+  </insert>
+
+  <update id="updateByPrimaryKeySelective" parameterType="com.flink.streaming.web.model.dto.ClusterDTO">
+    update cluster
+    <set>
+      id=#{id,jdbcType=BIGINT},
+      <if test="clusterName != null">
+        cluster_name = #{clusterName,jdbcType=VARCHAR},
+      </if>
+      <if test="clusterMasterIp != null">
+        cluster_master_ip = #{clusterMasterIp,jdbcType=VARCHAR},
+      </if>
+      <if test="yarnRmPort != null">
+        yarn_rm_port = #{yarnRmPort,jdbcType=VARCHAR},
+      </if>
+      <if test="flinkHttpPort != null">
+        flink_http_port = #{flinkHttpPort,jdbcType=VARCHAR},
+      </if>
+      <if test="flinkUiPort != null">
+        flink_ui_port = #{flinkUiPort,jdbcType=VARCHAR},
+      </if>
+      <if test="flinkHaHttpPort != null">
+        flink_ha_http_port = #{flinkHaHttpPort,jdbcType=VARCHAR},
+      </if>
+      <if test="remark != null">
+        remark = #{remark,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+
+  <delete id="deleteById" parameterType="java.lang.Long">
+    DELETE FROM cluster WHERE id = #{id,jdbcType=BIGINT}
+  </delete>
+</mapper>
